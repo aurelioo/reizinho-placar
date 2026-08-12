@@ -348,8 +348,11 @@
           ${third?.status === 'done' ? `<small>3º: ${team(third.scoreA > third.scoreB ? third.teamA : third.teamB)}</small>` : ''}
         </div></div>`;
       }
-      html += `<div class="card"><h2>Agora em quadra</h2>${
-        playing.map(gameRow).join('') || '<div class="empty">Nenhum jogo em andamento.</div>'}</div>`;
+      // com campeão definido, "agora em quadra" não faz mais sentido
+      if (!champs) {
+        html += `<div class="card"><h2>Agora em quadra</h2>${
+          playing.map(gameRow).join('') || '<div class="empty">Nenhum jogo em andamento.</div>'}</div>`;
+      }
       if (ko.length) {
         html += `<div class="card"><h2>Mata-mata</h2>${ko.map(gameRow).join('')}</div>`;
       }
