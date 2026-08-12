@@ -98,6 +98,8 @@
     .withdrawn { text-decoration: line-through; color: var(--muted); }
     .qcheck { color: var(--ok); font-weight: 800; }
     tr.in-cut td:first-child { box-shadow: inset 3px 0 0 var(--brand); }
+    .pts-table { table-layout: auto; min-width: 100%; }
+    .pts-table th, .pts-table td { width: auto; white-space: nowrap; }
     tr.cut-row td {
       padding: .25rem .55rem; text-align: center;
       font-size: .58rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
@@ -202,7 +204,8 @@
       padding: .5rem 0 .55rem; cursor: pointer; font-size: .68rem;
       display: flex; flex-direction: column; align-items: center; gap: .15rem;
     }
-    .tabbar button .ic { font-size: 1.15rem; line-height: 1; }
+    .tabbar button .ic { line-height: 0; }
+    .tabbar button .ic svg { width: 21px; height: 21px; }
     .tabbar button.on { color: var(--brand); font-weight: 700; }
   </style>
 </head>
@@ -221,10 +224,18 @@
   </div>
 
   <nav class="tabbar">
-    <button data-tab="jogos" class="on"><span class="ic">🎾</span>Jogos</button>
-    <button data-tab="atletas"><span class="ic">👥</span>Atletas</button>
-    <button data-tab="ranking"><span class="ic">🏆</span>Ranking</button>
-    <button data-tab="perfil"><span class="ic">⭐</span>Meu Perfil</button>
+    <button data-tab="jogos" class="on"><span class="ic">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M6 4.5a9 9 0 0 1 0 15"/><path d="M18 4.5a9 9 0 0 0 0 15"/></svg>
+    </span>Jogos</button>
+    <button data-tab="atletas"><span class="ic">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </span>Atletas</button>
+    <button data-tab="ranking"><span class="ic">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21c1.18.54 2.03 2.03 2.03 3.79"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+    </span>Pontuação</button>
+    <button data-tab="perfil"><span class="ic">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </span>Meu Perfil</button>
   </nav>
 
   <script type="module">
@@ -394,35 +405,53 @@
       season.stages.forEach(st => Object.keys(st.points).forEach(n => names.add(n)));
       const rows = [...names].map(name => {
         const per = season.stages.map(st => st.points[name] ?? 0);
-        return { name, per, total: per.reduce((a, b) => a + b, 0) };
+        const total = per.reduce((a, b) => a + b, 0);
+        const played = per.filter(p => p > 0).length;
+        return {
+          name, per, total, played,
+          pct: played ? Math.round(total / (played * season.points.champion) * 100) : 0,
+          wins: per.filter(p => p === season.points.champion).length,
+          finals: per.filter(p => p >= season.points.final).length,
+        };
       }).sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
 
       const stageHead = season.stages.map(st => {
         const d = st.date ? new Date(`${st.date}T12:00:00`) : null;
-        const label = d && !Number.isNaN(d.getTime())
+        const dm = d && !Number.isNaN(d.getTime())
           ? new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(d)
-          : `E${st.n}`;
-        return `<th class="num" title="${esc(st.name)}">${label}</th>`;
+          : '';
+        return `<th class="num" title="${esc(st.name)}">${dm ? `${st.n}ª - ${dm}` : `${st.n}ª`}</th>`;
       }).join('');
-      const cols = 3 + season.stages.length;
+      const cols = 7 + season.stages.length;
       const cutRow = label =>
         `<tr class="cut-row"><td colspan="${cols}">✂ ${label}</td></tr>`;
 
       return `<div class="card">
         <h2>${esc(season.name)} · Top 8 joga o Super 8${season.super16 ? ' · Top 16 o Super 16' : ''}</h2>
-        <table>
-          <thead><tr><th></th><th>Atleta</th>${stageHead}<th class="num">Total</th></tr></thead>
+        <div style="overflow-x:auto">
+        <table class="pts-table">
+          <thead><tr>
+            <th class="num">#</th><th>Atleta</th>
+            <th class="num">Pts</th><th class="num">Etapas</th><th class="num">%</th>
+            <th class="num">Vit.</th><th class="num">Fin.</th>
+            ${stageHead}
+          </tr></thead>
           <tbody>${rows.map((r, i) => `
-            <tr class="${i < 8 ? 'in-cut' : ''}">
-              <td>${i + 1}º</td>
-              <td style="overflow:hidden;text-overflow:ellipsis">${esc(r.name)}</td>
-              ${r.per.map(p => `<td class="num">${p || '<span style="color:var(--muted)">–</span>'}</td>`).join('')}
+            <tr class="${i < 8 ? 'in-cut' : ''}" data-player-name="${esc(r.name)}">
+              <td class="num">${i + 1}</td>
+              <td style="overflow:hidden;text-overflow:ellipsis;max-width:9rem">${esc(r.name)}</td>
               <td class="num"><b>${r.total}</b></td>
+              <td class="num">${r.played}</td>
+              <td class="num">${r.pct}%</td>
+              <td class="num">${r.wins}</td>
+              <td class="num">${r.finals}</td>
+              ${r.per.map(p => `<td class="num">${p || '<span style="color:var(--muted)">0</span>'}</td>`).join('')}
             </tr>
             ${i === 7 && rows.length > 8 ? cutRow('Corte Super 8') : ''}
             ${season.super16 && i === 15 && rows.length > 16 ? cutRow('Corte Super 16') : ''}`).join('')}
           </tbody>
         </table>
+        </div>
       </div>`;
     }
 
