@@ -3,13 +3,25 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark light" />
   <title>Placar ao vivo — Aldeia Beach Sports</title>
   <style>
     :root {
       --bg: #10161b; --panel: #1a2229; --border: #2b3640; --row: rgb(255 255 255 / .04);
       --ink: #e8edf2; --muted: #8b98a5;
-      --brand: #38bdf8; --ok: #4ade80; --bad: #f87171; --sun: #fbbf24;
+      --brand: #38bdf8; --on-brand: #06202c;
+      --ok: #4ade80; --bad: #f87171; --sun: #fbbf24;
       --gold: #fbbf24; --silver: #cbd5e1; --bronze: #e2a76f;
+    }
+    /* segue o tema do sistema */
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f4f5f7; --panel: #ffffff; --border: #dde3ea; --row: rgb(0 0 0 / .05);
+        --ink: #1c2733; --muted: #5b6773;
+        --brand: #0284c7; --on-brand: #ffffff;
+        --ok: #15803d; --bad: #dc2626; --sun: #b45309;
+        --gold: #f5b921; --silver: #94a3b8; --bronze: #cd8548;
+      }
     }
     * { box-sizing: border-box; }
     html, body { margin: 0; }
@@ -102,7 +114,7 @@
     .me-head { display: flex; align-items: center; gap: .6rem; padding: .7rem .8rem; }
     .me-head .avatar {
       width: 2.4rem; height: 2.4rem; border-radius: 999px; background: var(--brand);
-      color: #06202c; display: grid; place-items: center; font-weight: 800; font-size: 1rem;
+      color: var(--on-brand); display: grid; place-items: center; font-weight: 800; font-size: 1rem;
     }
     .me-head strong { font-size: 1rem; display: block; }
     .me-head .sub { color: var(--muted); font-size: .72rem; }
@@ -166,7 +178,7 @@
       bottom: calc(1rem + env(safe-area-inset-bottom));
       max-width: 608px; margin: 0 auto;
       padding: 1rem; border: none; border-radius: 14px;
-      background: var(--brand); color: #06202c;
+      background: var(--brand); color: var(--on-brand);
       font: inherit; font-size: 1.05rem; font-weight: 800; cursor: pointer;
       box-shadow: 0 6px 20px rgb(56 189 248 / .35);
     }
