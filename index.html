@@ -207,6 +207,11 @@
     }
     const posOf = p => p.group ? standings(p.group).findIndex(r => r.p.id === p.id) + 1 : 0;
 
+    // colocação só faz sentido com ≥2 jogos concluídos no grupo
+    const groupPlayedCount = letter =>
+      SNAP.db.games.filter(g => g.group === letter && g.status === 'done').length;
+    const rankingReady = letter => groupPlayedCount(letter) >= 2;
+
     const groupDone = letter =>
       SNAP.db.games.filter(g => g.group === letter).every(g => g.status === 'done');
     const allGroupsDone = () => (SNAP.groups ?? []).every(groupDone);
@@ -295,11 +300,16 @@
         <div class="group-head">Grupo ${letter}</div>
         <table>
           <thead><tr><th></th><th>Atleta</th><th class="num">J</th><th class="num">V</th><th class="num">Sal</th><th class="num">G</th></tr></thead>
-          <tbody>${standings(letter).map((r, i) => {
-            const medal = i === 0 ? 'm1' : i === 1 ? 'm2' : i === 2 ? 'm3' : '';
+          <tbody>${(rankingReady(letter)
+              ? standings(letter)
+              : standings(letter).slice().sort((a, b) => a.p.name.localeCompare(b.p.name))
+            ).map((r, i) => {
+            const ready = rankingReady(letter);
+            const medal = !ready ? '' : i === 0 ? 'm1' : i === 1 ? 'm2' : i === 2 ? 'm3' : '';
             return `
             <tr data-player="${r.p.id}">
-              <td>${medal ? `<span class="medal ${medal}">${i + 1}º</span>` : `${i + 1}º`}</td>
+              <td>${!ready ? '<span style="color:var(--muted)">–</span>'
+                : medal ? `<span class="medal ${medal}">${i + 1}º</span>` : `${i + 1}º`}</td>
               <td class="${r.p.withdrawn ? 'withdrawn' : ''}">${
                 qual.has(r.p.id) ? `<b>${esc(r.p.name)}</b> <span class="qcheck">✓</span>` : esc(r.p.name)
               }</td>
@@ -329,6 +339,10 @@
     function needHint(p) {
       if (p.withdrawn) return { cls: 'bad', text: 'Desistiu da etapa.' };
       if (!p.group) return { cls: 'warn', text: 'Aguardando sorteio dos grupos.' };
+      if (!rankingReady(p.group)) {
+        const c = groupPlayedCount(p.group);
+        return { cls: 'warn', text: `Grupo com ${c === 0 ? 'nenhum jogo concluído' : 'só 1 jogo concluído'} — colocação e cenários aparecem a partir do 2º jogo.` };
+      }
       const rows = standings(p.group);
       const idx = rows.findIndex(r => r.p.id === p.id);
       const mine = rows[idx];
@@ -370,7 +384,9 @@
             <span class="avatar">${esc(p.name[0])}</span>
             <div>
               <strong class="${p.withdrawn ? 'withdrawn' : ''}">${esc(p.name)}</strong>
-              <span class="sub">${p.group ? `Grupo ${p.group} · ${pos}º colocado` : 'Sem grupo'}</span>
+              <span class="sub">${p.group
+                ? `Grupo ${p.group}${rankingReady(p.group) ? ` · ${pos}º colocado` : ''}`
+                : 'Sem grupo'}</span>
             </div>
             ${isMe
               ? '<button data-action="trocar">trocar</button>'
