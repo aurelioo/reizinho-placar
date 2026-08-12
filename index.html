@@ -441,7 +441,12 @@
       if (!SNAP) return;
       const db = SNAP.db;
       $('#ev-name').textContent = db.event.name || 'Evento';
-      $('#ev-sub').textContent = [db.event.edition, db.event.venue].filter(Boolean).join(' · ');
+      const evDate = db.event.date
+        ? new Intl.DateTimeFormat('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' })
+            .format(new Date(`${db.event.date}T12:00:00`))
+        : '';
+      $('#ev-sub').textContent =
+        [db.event.edition, evDate, db.event.venue].filter(Boolean).join(' · ');
 
       const html = state.tab === 'jogos' ? tabJogos()
         : state.tab === 'atletas' ? tabAtletas()
