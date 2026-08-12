@@ -134,6 +134,18 @@
     .champion small { display: block; color: var(--muted); font-weight: 400; font-size: .72rem; }
     footer { text-align: center; color: var(--muted); font-size: .68rem; padding: .5rem 0 1rem; }
 
+    #sponsors { display: flex; flex-direction: column; gap: .9rem; padding: 0 .8rem 1.2rem; }
+    .sp-cat { display: flex; flex-direction: column; gap: .4rem; align-items: center; }
+    .sp-cat-name {
+      font-size: .6rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .1em; color: var(--muted);
+    }
+    .sp-logos { display: flex; flex-wrap: wrap; gap: .6rem; justify-content: center; }
+    .sp-logos img {
+      height: 38px; max-width: 140px; object-fit: contain;
+      background: #fff; border-radius: 8px; padding: .3rem .55rem;
+    }
+
     /* ---- tabbar ---- */
     .tabbar {
       position: fixed; bottom: 0; left: 0; right: 0; z-index: 10;
@@ -161,6 +173,7 @@
     </header>
     <div id="content"><div class="card"><div class="empty">Buscando placar…</div></div></div>
     <footer id="updated"></footer>
+    <div id="sponsors"></div>
   </div>
 
   <nav class="tabbar">
@@ -469,6 +482,19 @@
         : tabPerfil();
       $('#content').innerHTML = html;
       $('#updated').textContent = `Atualizado ${new Date().toLocaleTimeString('pt-BR')}`;
+
+      const cats = [];
+      for (const s of db.sponsors ?? []) {
+        let c = cats.find(x => x.name === s.category);
+        if (!c) cats.push(c = { name: s.category, items: [] });
+        c.items.push(s);
+      }
+      $('#sponsors').innerHTML = cats.map(c => `
+        <div class="sp-cat">
+          <span class="sp-cat-name">${esc(c.name)}</span>
+          <div class="sp-logos">${c.items.map(s =>
+            `<img src="${esc(s.url)}" alt="${esc(c.name)}" loading="lazy">`).join('')}</div>
+        </div>`).join('');
 
       document.querySelectorAll('.tabbar button').forEach(b =>
         b.classList.toggle('on', b.dataset.tab === state.tab));
