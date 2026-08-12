@@ -477,6 +477,26 @@
     function needHint(p) {
       if (p.withdrawn) return { cls: 'bad', text: 'Desistiu da etapa.' };
       if (!p.group) return { cls: 'warn', text: 'Aguardando sorteio dos grupos.' };
+      // etapa encerrada (campeão definido): mostra o resultado final
+      const koAll = SNAP.db.games.filter(g => g.phase === 'ko' && !g.bye);
+      const finalG = koAll.find(g => g.id === 'KO-2-0');
+      if (finalG?.status === 'done') {
+        const winF = finalG.scoreA > finalG.scoreB ? finalG.teamA : finalG.teamB;
+        const loseF = finalG.scoreA > finalG.scoreB ? finalG.teamB : finalG.teamA;
+        if (winF?.includes(p.id)) return { cls: 'ok', text: 'Campeão da etapa! 🏆' };
+        if (loseF?.includes(p.id)) return { cls: 'ok', text: 'Vice-campeão da etapa.' };
+        const tp = koAll.find(g => g.id === 'KO-3P');
+        if (tp?.status === 'done') {
+          const winT = tp.scoreA > tp.scoreB ? tp.teamA : tp.teamB;
+          const loseT = tp.scoreA > tp.scoreB ? tp.teamB : tp.teamA;
+          if (winT?.includes(p.id)) return { cls: 'ok', text: '3º lugar da etapa.' };
+          if (loseT?.includes(p.id)) return { cls: 'warn', text: '4º lugar da etapa.' };
+        }
+        if (koAll.some(g => g.teamA?.includes(p.id) || g.teamB?.includes(p.id))) {
+          return { cls: 'warn', text: 'Eliminado no mata-mata.' };
+        }
+        return { cls: 'bad', text: 'Eliminado na fase de grupos.' };
+      }
       if (!rankingReady(p.group)) {
         const c = groupPlayedCount(p.group);
         return { cls: 'warn', text: `Grupo com ${c === 0 ? 'nenhum jogo concluído' : 'só 1 jogo concluído'} — colocação e cenários aparecem a partir do 2º jogo.` };
