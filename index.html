@@ -145,6 +145,32 @@
       height: 64px; max-width: 220px; object-fit: contain;
     }
 
+    /* ---- splash de patrocinadores (1ª abertura do dia) ---- */
+    .splash {
+      position: fixed; inset: 0; z-index: 100;
+      background: var(--bg);
+      display: flex; flex-direction: column;
+    }
+    .splash-body {
+      flex: 1; overflow-y: auto;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 1.4rem; padding: 2rem 1rem 6.5rem; text-align: center;
+    }
+    .splash-body h1 { margin: 0; font-size: 1.3rem; }
+    .splash-body .sub { color: var(--muted); font-size: .8rem; margin-top: -.9rem; }
+    .splash .sp-cat { gap: .6rem; }
+    .splash .sp-logos { gap: 1rem; }
+    .splash .sp-logos img { height: 84px; max-width: 260px; }
+    .splash-btn {
+      position: fixed; left: 1rem; right: 1rem;
+      bottom: calc(1rem + env(safe-area-inset-bottom));
+      max-width: 608px; margin: 0 auto;
+      padding: 1rem; border: none; border-radius: 14px;
+      background: var(--brand); color: #06202c;
+      font: inherit; font-size: 1.05rem; font-weight: 800; cursor: pointer;
+      box-shadow: 0 6px 20px rgb(56 189 248 / .35);
+    }
+
     /* ---- tabbar ---- */
     .tabbar {
       position: fixed; bottom: 0; left: 0; right: 0; z-index: 10;
@@ -533,6 +559,41 @@
     });
 
     /* ---------- dados ---------- */
+    let splashChecked = false;
+    function maybeSplash() {
+      if (splashChecked) return;
+      splashChecked = true;
+      const today = new Date().toISOString().slice(0, 10);
+      if (localStorage.getItem('placar.splash') === today) return;
+      const sponsors = SNAP.db.sponsors ?? [];
+      if (!sponsors.length) return;
+      const cats = [];
+      for (const s of sponsors) {
+        let c = cats.find(x => x.name === s.category);
+        if (!c) cats.push(c = { name: s.category, items: [] });
+        c.items.push(s);
+      }
+      const el = document.createElement('div');
+      el.className = 'splash';
+      el.innerHTML = `
+        <div class="splash-body">
+          <h1>${esc(SNAP.db.event.name || 'Liga')}</h1>
+          <div class="sub">${esc(SNAP.db.event.edition ?? '')}</div>
+          ${cats.map(c => `
+            <div class="sp-cat">
+              <span class="sp-cat-name">${esc(c.name)}</span>
+              <div class="sp-logos">${c.items.map(s =>
+                `<img src="${esc(s.url)}" alt="${esc(c.name)}">`).join('')}</div>
+            </div>`).join('')}
+        </div>
+        <button class="splash-btn">Acessar Liga</button>`;
+      document.body.appendChild(el);
+      el.querySelector('.splash-btn').addEventListener('click', () => {
+        localStorage.setItem('placar.splash', today);
+        el.remove();
+      });
+    }
+
     async function load() {
       let q = sb.from('event_snapshots')
         .select('data, updated_at').eq('is_public', true);
@@ -546,6 +607,7 @@
       }
       SNAP = data.data;
       render();
+      maybeSplash();
     }
 
     sb.channel('placar')
