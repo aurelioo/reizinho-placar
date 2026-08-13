@@ -714,9 +714,11 @@
         </div>
         <button class="splash-btn">Acessar Liga</button>`;
       document.body.appendChild(el);
+      document.body.style.overflow = 'hidden'; // scroll só dentro do splash
       el.querySelector('.splash-btn').addEventListener('click', () => {
         localStorage.setItem('placar.splash', today);
         el.remove();
+        document.body.style.overflow = '';
       });
     }
 
