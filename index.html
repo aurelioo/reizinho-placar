@@ -595,9 +595,14 @@
         html += `<div class="card"><h2>Próximo jogo
             <span class="h2-badge ${next.posQueue === 1 ? 'hot' : ''}">${badge}</span></h2>
           ${gameRow(g)}
-          <div class="hint-line">${g.teamA ?
-            `Com <b>${esc(partner ?? '?')}</b> vs ${opp}` : 'Adversários a definir'}${
-            g.status === 'waiting' ? ' · aguardando definição' : ''}</div>
+          <div class="hint-line">${(() => {
+            if (!g.teamA) return 'Adversários a definir — aguardando os jogos anteriores.';
+            const ahead = (next.posQueue ?? 1) - 1;
+            const when = next.posQueue === 1 ? 'Sua partida é a próxima'
+              : next.posQueue ? `Sua partida será daqui a ${ahead} jogo${ahead > 1 ? 's' : ''}`
+              : 'Sua partida aguarda definição';
+            return `${when}, com <b>${esc(partner ?? '?')}</b> vs ${opp}.`;
+          })()}</div>
         </div>`;
       }
       if (games.length) {
