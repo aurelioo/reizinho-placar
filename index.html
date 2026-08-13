@@ -641,7 +641,7 @@
       }
       const queue = SNAP.db.games.filter(g => g.status === 'queued');
       const idx = queue.findIndex(inGame);
-      if (idx === 0) return { cls: 'hot', html: `📣 <b>${esc(me.name)}, seu jogo é o próximo a ser chamado!</b> Fica perto da quadra.` };
+      if (idx === 0) return { cls: 'hot', html: `📣 <b>${esc(me.name)}, seu jogo é o próximo a ser chamado!</b>` };
       if (idx > 0) return { cls: 'info', html: `⏳ ${esc(me.name)}, seu próximo jogo é o <b>${idx + 1}º da fila</b>.` };
       return null;
     }
