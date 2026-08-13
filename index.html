@@ -38,6 +38,7 @@
     }
     header h1 { margin: 0; font-size: 1.05rem; }
     header .sub { color: var(--muted); font-size: .72rem; }
+    .live[hidden] { display: none; }
     .live {
       display: inline-flex; align-items: center; gap: .3rem;
       font-size: .62rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
@@ -621,6 +622,10 @@
         : '';
       $('#ev-sub').textContent =
         [db.event.edition, evDate, db.event.venue].filter(Boolean).join(' · ');
+
+      // etapa encerrada: sem badge "ao vivo"
+      const finalDone = (db.games ?? []).find(g => g.id === 'KO-2-0')?.status === 'done';
+      document.querySelector('.live').hidden = finalDone;
 
       const html = state.tab === 'jogos' ? tabJogos()
         : state.tab === 'atletas' ? tabAtletas()
