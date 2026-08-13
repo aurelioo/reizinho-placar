@@ -48,6 +48,18 @@
       animation: pulse 1.6s ease-in-out infinite; }
     @keyframes pulse { 50% { opacity: .3; } }
 
+    #banner {
+      margin: 0 .8rem .7rem; padding: .65rem .9rem;
+      border-radius: 12px; font-size: .85rem; line-height: 1.4;
+      cursor: pointer; user-select: none;
+    }
+    #banner.invite { background: rgb(56 189 248 / .12); color: var(--brand);
+      border: 1px dashed rgb(56 189 248 / .5); }
+    #banner.hot { background: var(--brand); color: var(--on-brand);
+      animation: banner-pulse 1.8s ease-in-out infinite; }
+    #banner.info { background: var(--panel); border: 1px solid var(--border); color: var(--ink); }
+    @keyframes banner-pulse { 50% { opacity: .82; } }
+
     .card {
       background: var(--panel); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
       margin-bottom: .7rem;
@@ -219,6 +231,7 @@
       </div>
       <span class="live"><i></i> ao vivo</span>
     </header>
+    <div id="banner" hidden></div>
     <div id="content"><div class="card"><div class="empty">Buscando placar…</div></div></div>
     <footer id="updated"></footer>
     <div id="sponsors"></div>
@@ -613,6 +626,33 @@
         </div>`;
     }
 
+    /* ---------- banner (convite / avisos do meu jogo) ---------- */
+    function bannerInfo() {
+      const me = state.meId ? P(state.meId) : null;
+      if (!me) {
+        return { cls: 'invite',
+          html: '⭐ <b>Acompanhe seu desempenho ao vivo</b> — toque aqui pra encontrar seu perfil' };
+      }
+      const inGame = g => g.teamA?.includes(me.id) || g.teamB?.includes(me.id);
+      const live = SNAP.db.games.find(g => g.status === 'playing' && inGame(g));
+      if (live) {
+        const court = SNAP.db.courts.find(c => c.id === live.courtId);
+        return { cls: 'hot', html: `🎾 <b>${esc(me.name)}, você está em quadra</b>${court ? ` — ${esc(court.name)}` : ''}!` };
+      }
+      const queue = SNAP.db.games.filter(g => g.status === 'queued');
+      const idx = queue.findIndex(inGame);
+      if (idx === 0) return { cls: 'hot', html: `📣 <b>${esc(me.name)}, seu jogo é o próximo a ser chamado!</b> Fica perto da quadra.` };
+      if (idx > 0) return { cls: 'info', html: `⏳ ${esc(me.name)}, seu próximo jogo é o <b>${idx + 1}º da fila</b>.` };
+      return null;
+    }
+
+    function renderBanner() {
+      const el = $('#banner');
+      const info = bannerInfo();
+      el.hidden = !info;
+      if (info) { el.className = info.cls; el.innerHTML = info.html; }
+    }
+
     /* ---------- render ---------- */
     function render() {
       if (!SNAP) return;
@@ -649,6 +689,7 @@
             `<img src="${esc(s.url)}" alt="${esc(c.name)}" loading="lazy">`).join('')}</div>
         </div>`).join('');
 
+      renderBanner();
       document.querySelectorAll('.tabbar button').forEach(b =>
         b.classList.toggle('on', b.dataset.tab === state.tab));
 
@@ -658,6 +699,9 @@
 
     /* ---------- eventos ---------- */
     document.addEventListener('click', e => {
+      if (e.target.closest('#banner')) {
+        state.tab = 'perfil'; state.viewId = null; render(); return;
+      }
       const tabBtn = e.target.closest('.tabbar button');
       if (tabBtn) { state.tab = tabBtn.dataset.tab; state.viewId = null; render(); return; }
 
